@@ -1,0 +1,19 @@
+
+
+reset;
+
+option solver cplexamp;
+
+#option cplex_options 'presolve = 0 timelimit = 43200 integrality = 1e-09 mipgap = 0 mipemphasis 1 mipstartvalue = 0 threads 1 prereduce = 0';
+option cplex_options 'timelimit = 14400 integrality = 10.e-4 mipgap = 0.01 mipdisplay 4';
+
+model Model.mod;
+#data TestData_Small.dat;
+data TestData_Rabia.dat;
+
+solve;
+
+#reset;
+
+
+

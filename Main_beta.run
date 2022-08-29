@@ -1,0 +1,247 @@
+
+reset;
+
+param DetailedOutput_LB_0 symbolic;
+let DetailedOutput_LB_0 := '.\output\AMPL_F_LB_0_beta.txt';
+
+param DetailedOutput_LB_1 symbolic;
+let DetailedOutput_LB_1 := '.\output\AMPL_F_LB_1_beta.txt';
+
+param DetailedOutput_UB_0 symbolic;
+let DetailedOutput_UB_0 := '.\output\AMPL_F_UB_0_beta.txt';
+
+param DetailedOutput_UB_1 symbolic;
+let DetailedOutput_UB_1 := '.\output\AMPL_F_UB_1_beta.txt';
+
+option solver minos;
+#option solver baron;
+
+model Model_beta.mod;
+data cases.dat;
+
+#let mean_p := (3*(q[N-5]-q[1])/q[N-5])*(1/(N-5))*sum{i in 1..(N-5)} q[i];
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 10 )then {
+
+	let mean_p := 10;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 100 )then {
+
+	let mean_p := 100;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 1000 )then {
+
+	let mean_p := 1000;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 10000 )then {
+
+	let mean_p := 10000;
+	
+}else{
+
+	let mean_p := 100000;
+	
+}
+}
+}
+}
+	
+let mean_p := 100;
+
+let {i in 1..N} p[i] := q[i]/mean_p;
+let PP := (1/(N-5))*sum{i in 1..(N-5)} p[i];
+let m := floor((N-6)/2);
+
+let {s in 1..S} Delta_min[s] := p[N]^s;
+let {s in 1..S} Delta_max[s] := 0;
+
+for {s in 1..S}{
+	for {i in 1..(N-5)}{
+		for {j in 1..(N-5)}{
+			 let Delta_min[s] := min(Delta_min[s], abs(p[i]^s-p[j]^s) );
+			 let Delta_max[s] := max(Delta_max[s], abs(p[i]^s-p[j]^s) );		 
+		}
+	}
+}
+
+problem P_LB_Case_0: beta, C, C_bar_S, C_bar_sigma, F_beta_LB_Case_0, Moment, Beta_sum, CT_beta_Case_0, C_bar_S_Case_0_definition, C_bar_sigma_Case_0_definition, C_bar_LB, C_bar_UB, LB0_constr_even, p1_condition, Left_Right_k, V_shape_left, V_shape_right ; 
+
+problem P_UB_Case_0: beta, C, C_bar_S, C_bar_sigma, F_beta_UB_Case_0, Moment, Beta_sum, CT_beta_Case_0, C_bar_S_Case_0_definition, C_bar_sigma_Case_0_definition, C_bar_LB, C_bar_UB, LB0_constr_even, p1_condition, Left_Right_k, V_shape_left, V_shape_right; 
+
+problem P_LB_Case_1: beta, C, C_bar_S, C_bar_sigma, F_beta_LB_Case_1, Moment, Beta_sum, CT_beta_Case_1, C_bar_S_Case_1_definition, C_bar_sigma_Case_1_definition, C_bar_LB, C_bar_UB, LB0_constr_even, p1_condition, Left_Right_k, V_shape_left, V_shape_right; 
+
+problem P_UB_Case_1: beta, C, C_bar_S, C_bar_sigma, F_beta_UB_Case_1, Moment, Beta_sum, CT_beta_Case_1, C_bar_S_Case_1_definition, C_bar_sigma_Case_1_definition, C_bar_LB, C_bar_UB, LB0_constr_even, p1_condition, Left_Right_k, V_shape_left, V_shape_right; 
+
+########################################################################################################
+
+if (Case == 0)then { # Either seq1 = (n, n-2, n-3, ..., n-4, n-1) or seq2 = (n, n-2, n-4, ..., n-3, n-1)
+
+	let a:= p[N-3];
+	let b:= p[N-4];	
+	
+	let LB := LLB_1/((mean_p));
+	let UB := UUB_1/((mean_p));
+	let theta := Ttheta_1/((mean_p));
+	
+	for {kkk in LL_1..UU_1}{
+	
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+	 
+		solve P_LB_Case_0;
+		display F_beta_LB_Case_0*(mean_p)^2;
+		let objective_LB_1 := F_beta_LB_Case_0*(mean_p)^2;
+		display mean_p;
+		display a;
+		display F_beta_LB_Case_0;
+		display F_beta_LB_Case_0*(mean_p)^2;
+	
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_LB_0);
+		}
+
+		solve P_UB_Case_0;
+		display F_beta_UB_Case_0*(mean_p)^2;
+		let objective_UB_1 := F_beta_UB_Case_0*(mean_p)^2;
+		display mean_p;
+		display a;
+		display F_beta_UB_Case_0;
+		display F_beta_UB_Case_0*(mean_p)^2;
+		
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_UB_0);
+		}
+		
+		print objective_LB_1 > '.\output\AMPL_F_LB_1.txt';
+		print objective_UB_1 > '.\output\AMPL_F_UB_1.txt';
+		
+	}
+	for {kkk in LL_2..UU_2}{
+		
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+		
+		let a:= p[N-4];
+		let b:= p[N-3];	
+	
+		let LB := LLB_2/((mean_p));
+		let UB := UUB_2/((mean_p));
+		let theta := Ttheta_2/((mean_p));
+		
+		solve P_LB_Case_0;	
+		#solve P_LB_Case_0;
+	
+		display mean_p;
+		display a;
+		display F_beta_LB_Case_0;
+		display F_beta_LB_Case_0*(mean_p)^2;
+		let objective_LB_2 := F_beta_LB_Case_0*(mean_p)^2;
+	
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_LB_1);
+		}
+
+		solve P_UB_Case_0;
+		#solve P_UB_Case_0;	
+		display mean_p;
+		display a;
+		display F_beta_UB_Case_0;
+		display F_beta_UB_Case_0*(mean_p)^2;
+
+		let objective_UB_2 := F_beta_UB_Case_0*(mean_p)^2;
+	
+		print objective_LB_2 > '.\output\AMPL_F_LB_2.txt';
+		print objective_UB_2 > '.\output\AMPL_F_UB_2.txt';
+
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_UB_1);
+		}
+	}
+
+}
+
+########################################################################################################
+
+if (Case == 2)then { # seq1 = (n, n-2, n-3, ..., n-4, n-1)
+
+	let a:= p[N-3];
+	let b:= p[N-4];	
+	
+	let LB := LLB_1/((mean_p));
+	let UB := UUB_1/((mean_p));
+	let theta := Ttheta_1/((mean_p));
+	
+	for {kkk in LL_1..UU_1}{
+	
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+	 
+		solve P_LB_Case_0;
+		display F_beta_LB_Case_0*(mean_p)^2;
+		let objective_LB_1 := F_beta_LB_Case_0*(mean_p)^2;
+		display mean_p;
+		display a;
+		display F_beta_LB_Case_0;
+		display F_beta_LB_Case_0*(mean_p)^2;
+	
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_LB_0);
+		}
+
+		solve P_UB_Case_0;
+		display F_beta_UB_Case_0*(mean_p)^2;
+		let objective_UB_1 := F_beta_UB_Case_0*(mean_p)^2;
+		display mean_p;
+		display a;
+		display F_beta_UB_Case_0;
+		display F_beta_UB_Case_0*(mean_p)^2;
+		
+		for {j in 1..(N-5)}{
+			printf '\n %11.3f', mean_p*beta[j] >> (DetailedOutput_UB_0);
+		}
+		
+		print objective_LB_1 > '.\output\AMPL_F_LB_1.txt';
+		print objective_UB_1 > '.\output\AMPL_F_UB_1.txt';
+		
+	}
+}
+
+
+
+
+########################################################################################################
+
+if (Case == 1)then { #seq3 = (n, n-2, n-3, n-4, ... , n-1)
+
+	let LB := LLB/mean_p;
+	let UB := UUB/mean_p;
+	let theta := Ttheta/mean_p;
+		
+	for {kkk in LL_1..UU_1}{
+
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+		
+		solve P_LB_Case_1;
+		display F_beta_LB_Case_1*(mean_p)^2;
+		let objective_LB := F_beta_LB_Case_1*(mean_p)^2;
+
+		solve P_UB_Case_1;
+		display F_beta_UB_Case_1*(mean_p)^2;
+		let objective_UB := F_beta_UB_Case_1*(mean_p)^2;
+		
+		print objective_LB > '.\output\AMPL_F_LB.txt';
+		print objective_UB > '.\output\AMPL_F_UB.txt';	
+		
+	}
+}
+
+
+
+

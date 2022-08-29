@@ -1,0 +1,281 @@
+
+reset;
+
+param DetailedOutput_0_nop1 symbolic;
+let DetailedOutput_0_nop1 := '.\output\AMPL_F_1_beta_nop1.txt';
+
+param DetailedOutput_1_nop1 symbolic;
+let DetailedOutput_1_nop1 := '.\output\AMPL_F_2_beta_nop1.txt';
+
+param DetailedOutput_nop1 symbolic;
+let DetailedOutput_nop1 := '.\output\AMPL_F_beta_nop1.txt';
+
+param DetailedOutput_0 symbolic;
+let DetailedOutput_0 := '.\output\AMPL_F_1_beta.txt';
+
+param DetailedOutput_1 symbolic;
+let DetailedOutput_1 := '.\output\AMPL_F_2_beta.txt';
+
+param DetailedOutput symbolic;
+let DetailedOutput := '.\output\AMPL_F_beta.txt';
+
+option solver knitro;
+#option solver ipopt;
+#option solver cplexamp;
+#option solver gurobi;
+#option solver minos;
+#option solver baron;
+
+#option cplex_options 'presolve = 0 timelimit = 43200 integrality = 1e-09 mipgap = 0 mipemphasis 1 mipstartvalue = 0 threads 1 prereduce = 0';
+#option cplex_options 'qcpconvergetol 1e-2 qctol1 1e-3 qctol2 1e-3 qctol3 1e-3 qtolin 1 reqconvex 1 resolve 1';
+#option cplex_options 'timelimit = 14400 qpmethod = 1';
+#option minos_options 'feasibility_tolerance=1.0e-5 optimality_tolerance=1.0e-3 iterations_limit=5000';
+#option cplex_options 'qcpconvergetol 1e-5 qctol1 1e-4 qctol2 1e-4 qctol3 1e-4 qtolin 0 reqconvex 1 resolve 1 prereduce 0 presolve 0';
+
+#option cplex_options 'baropt  crossover 0 comptol 1e-2';
+option knitro_options "feastol=1.0e-06 opttol = 1.0e-06 presolve=0";
+
+model Model_beta_hat_C_hat.mod;
+#data TestData_Small.dat;
+#data TestData_Rabia.dat;
+data cases.dat;
+
+#let mean_p := (3*(q[N-5]-q[1])/q[N-5])*(1/(N-5))*sum{i in 1..(N-5)} q[i];
+let mean_p := 0.5*q[N-5] + 0.5*(1/(N-5))*sum{i in 1..(N-5)} q[i];
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 10 )then {
+
+	let mean_p := 10;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 100 )then {
+
+	let mean_p := 100;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 1000 )then {
+
+	let mean_p := 1000;
+	
+}else{
+
+if ( (1/(N-5))*sum{i in 1..(N-5)} q[i] <= 10000 )then {
+
+	let mean_p := 10000;
+	
+}else{
+
+	let mean_p := 100000;
+	
+}
+}
+}
+}
+
+let mean_p := 100;
+
+let {i in 1..N} p[i] := q[i]/mean_p;
+
+let m := floor((N-6)/2);
+
+let MS := sum{i in 1..N}p[i];
+
+#let {ell in 0..L} b_l[ell] := ell*(p[N-5] - p[1])/L + p[1];
+
+let L := N-6;
+let {ell in 0..L} b_l[ell] := p[ell+1];
+
+let {s in 1..S} Delta_min[s] := p[N]^s;
+let {s in 1..S} Delta_max[s] := 0;
+
+for {s in 1..S}{
+	for {i in 1..(N-5)}{
+		for {j in 1..(N-5)}{
+			 let Delta_min[s] := min(Delta_min[s], abs(p[i]^s-p[j]^s) );
+			 let Delta_max[s] := max(Delta_max[s], abs(p[i]^s-p[j]^s) );		 
+		}
+	}
+}
+
+problem P_Case_0_without_p1: beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_0, CT_beta_Case_0, C_bar_S_Case_0_definition, C_bar_Case_0_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even; 
+problem P_Case_2_without_p1: beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_2, CT_beta_Case_2, C_bar_S_Case_2_definition, C_bar_Case_2_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even; 
+problem P_Case_1_without_p1: beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_1, CT_beta_Case_1, C_bar_S_Case_1_definition, C_bar_Case_1_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even; 
+
+problem P_Case_0: GG, Bk, beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_0, CT_beta_Case_0, C_bar_S_Case_0_definition, C_bar_Case_0_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even, p1_condition, p1_condition_0, Left_Right_k_low, Left_Right_k_up , V_shape_left, V_shape_right, P_2_3, P_2_3_Bk1, P_2_3_Bk2, P_2_3_Bk3, P_2_3_Bk4, P_2_3_Bk5, P_2_3_Bk6, P_2_3_Bk7, GG_const, Beta_bounds0, Beta_bounds1 ; 
+problem P_Case_2: GG, Bk, beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_2, CT_beta_Case_2, C_bar_S_Case_2_definition, C_bar_Case_2_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even, p1_condition, p1_condition_0, Left_Right_k_low, Left_Right_k_up , V_shape_left, V_shape_right, P_2_3, P_2_3_Bk1, P_2_3_Bk2, P_2_3_Bk3, P_2_3_Bk4, P_2_3_Bk5, P_2_3_Bk6, P_2_3_Bk7, GG_const, Beta_bounds0, Beta_bounds1 ; 
+problem P_Case_1: GG, Bk, beta_hat, C, C_bar_S, C_bar, C_bar_sigma, F_beta_Case_1, CT_beta_Case_1, C_bar_S_Case_1_definition, C_bar_Case_1_definition, C_bar_LB, C_bar_UB, Beta_sum, beta_hat_lb_0, beta_hat_lb_1, beta_hat_lb_2, beta_hat_ub_0, beta_hat_ub_1, beta_hat_ub_2, Moments, Moment_p2, beta_hat_1_lb, beta_hat_1_ub, beta_hat_power, beta_hat_power_2, Slop, LB0_constr_even, p1_condition, p1_condition_0, Left_Right_k_low, Left_Right_k_up , V_shape_left, V_shape_right, P_2_3, P_2_3_Bk1, P_2_3_Bk2, P_2_3_Bk3, P_2_3_Bk4, P_2_3_Bk5, P_2_3_Bk6, P_2_3_Bk7, GG_const, Beta_bounds0, Beta_bounds1 ; 
+
+
+#let {j in 1..(N-5), s in 1..S} beta_hat[j,s] := (p[j])^s;
+
+#fix {j in 1..(N-5)} beta[j] := BETA[j];
+#fix a:= A;
+#fix b:= B;
+
+let L := 2*(N-6)+1;
+let {ell in 0..(N-6)} b_l[2*ell] := p[ell+1];
+let {ell in 0..(N-6)} b_l[2*ell+1] := (p[ell+1] + p[ell+2])/2;
+
+param Beta_hat {1..(N-5), 1..S};
+
+########################################################################################################
+	
+if (Case == 0)then { # Either seq1 = (n, n-2, n-3, ..., n-4, n-1) or seq2 = (n, n-2, n-4, ..., n-3, n-1)
+
+	let a:= p[N-3];
+	let b:= p[N-4];	
+	
+	let LB := LLB_1/((mean_p));
+	let UB := UUB_1/((mean_p));
+	let theta := Ttheta_1/((mean_p));
+	
+	solve P_Case_0_without_p1;
+	
+	for {j in 1..(N-5)}{
+		printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_1_beta_nop1.txt';
+	}
+	let objective := F_beta_Case_0*(mean_p)^2;
+	print objective > '.\output\AMPL_F_1_nop1.txt';
+	
+	for {kkk in LL_1..UU_1}{
+
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+			
+		solve P_Case_0;	
+		
+		let {i in 1..(N-6), j in 1..S} Beta_hat[i,j] := mean_p*beta_hat[i,j];
+	
+		display Beta_hat;
+
+		let objective := F_beta_Case_0*(mean_p)^2;
+														
+		for {j in 1..(N-5)}{
+			printf '\n %11.10f', mean_p*beta_hat[j,1] >> (DetailedOutput_0);
+		}
+				
+		print objective > '.\output\AMPL_F_1.txt';
+		
+	}
+	
+	let a:= p[N-4];
+	let b:= p[N-3];	
+	
+	let LB := LLB_2/((mean_p));
+	let UB := UUB_2/((mean_p));
+	let theta := Ttheta_2/((mean_p));
+	
+	solve P_Case_0_without_p1;
+	
+	for {j in 1..(N-5)}{
+		printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_2_beta_nop1.txt';
+	}
+
+	let objective := F_beta_Case_0*(mean_p)^2;
+	print objective > '.\output\AMPL_F_2_nop1.txt';
+			
+	for {kkk in LL_2..UU_2}{
+	
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+						
+		solve P_Case_0;	
+				
+		let {i in 1..(N-6), j in 1..S} Beta_hat[i,j] := mean_p*beta_hat[i,j];
+			
+		display Beta_hat;
+				
+		for {j in 1..(N-5)}{
+			printf '\n %11.10f', mean_p*beta_hat[j,1] >> (DetailedOutput_1);
+		}
+						
+		let objective := F_beta_Case_0*(mean_p)^2;
+		
+		print objective > '.\output\AMPL_F_2.txt';
+		
+	}
+
+}
+
+
+########################################################################################################
+
+if (Case == 2)then { # seq1 = (n, n-2, n-3, ..., n-4, n-1) 
+
+	let a:= p[N-3];
+	let b:= p[N-4];	
+	
+	let LB := LLB_1/((mean_p));
+	let UB := UUB_1/((mean_p));
+	let theta := Ttheta_1/((mean_p));
+	
+	solve P_Case_2_without_p1;
+	
+	for {j in 1..(N-5)}{
+		printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_beta_nop1.txt';
+	}
+	let objective := F_beta_Case_2*(mean_p)^2;
+	print objective > '.\output\AMPL_F_nop1.txt';
+	
+	for {kkk in LL_1..UU_1}{
+
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+					
+		solve P_Case_0;	
+
+		let objective := F_beta_Case_2*(mean_p)^2;
+		
+		print objective > '.\output\AMPL_F.txt';
+		
+		for {j in 1..(N-5)}{
+			printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_beta.txt';
+		}
+		
+		
+	}
+
+}
+
+
+########################################################################################################
+
+if (Case == 1)then { # seq3 = (n, n-2, n-3, n-4, ... , n-1)
+
+	let LB := LLB/mean_p;
+	let UB := UUB/mean_p;
+	
+	let theta := Ttheta/mean_p;
+
+	solve P_Case_1_without_p1;
+	
+	for {j in 1..(N-5)}{
+		printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_beta_nop1.txt';
+	}
+	let objective := F_beta_Case_1*(mean_p)^2;
+	print objective > '.\output\AMPL_F_nop1.txt';
+	
+	for {kkk in LL_1..UU_1}{
+
+		let k_position := kkk;
+		let kk_pos := min(k_position-3-1, N-5 - (k_position-3));
+				
+		solve P_Case_1;
+		
+		let objective := F_beta_Case_1*(mean_p)^2;
+				
+		print objective > '.\output\AMPL_F.txt';
+		
+		for {j in 1..(N-5)}{
+			printf '\n %11.10f', mean_p*beta_hat[j,1] >> '.\output\AMPL_F_beta.txt';
+		}
+		
+	}
+}
+
+
+
+
+
